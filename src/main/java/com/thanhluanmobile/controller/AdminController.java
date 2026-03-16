@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +29,14 @@ public class AdminController {
 
     @Autowired
     private UserRepository userRepository;
+
+    // ==========================================
+    // API QUẢN LÝ KHÁCH HÀNG (USERS)
+    // ==========================================
+    @GetMapping("/users")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(userRepository.findAll());
+    }
 
     // ==========================================
     // API QUẢN LÝ SẢN PHẨM (CRUD PRODUCTS)
@@ -58,6 +65,14 @@ public class AdminController {
         product.setStorage(productDetails.getStorage());
         product.setColor(productDetails.getColor());
         product.setConditionType(productDetails.getConditionType());
+
+        // Cập nhật thêm các trường mới
+        product.setImage(productDetails.getImage());
+        product.setGallery(productDetails.getGallery());
+        product.setBatteryHealth(productDetails.getBatteryHealth());
+        product.setAccessories(productDetails.getAccessories());
+        product.setWarrantyMonths(productDetails.getWarrantyMonths());
+
         product.setUpdatedAt(new Date());
 
         productRepository.save(product);
@@ -80,11 +95,11 @@ public class AdminController {
         long totalOrders = orderRepository.count();
         long totalProducts = productRepository.count();
 
-        // Tính tổng doanh thu (chỉ cộng tiền của các đơn hàng đã giao thành công)
-        BigDecimal totalRevenue = orderRepository.findAll().stream()
+        // SỬA LỖI ÉP KIỂU: Tự động trích xuất giá trị số thực để cộng dồn mượt mà
+        double totalRevenue = orderRepository.findAll().stream()
                 .filter(o -> "DELIVERED".equals(o.getStatus()))
-                .map(Order::getTotalPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .mapToDouble(o -> o.getTotalPrice() != null ? o.getTotalPrice().doubleValue() : 0.0)
+                .sum();
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsers", totalUsers);
@@ -106,6 +121,20 @@ public class AdminController {
 
         String newStatus = statusUpdate.get("status");
         order.setStatus(newStatus);
+
+        // LOGIC MỚI: Nếu trạng thái là ĐÃ GIAO HÀNG (DELIVERED), đánh dấu máy đã bán (Stock = 0)
+        if ("DELIVERED".equals(newStatus)) {
+            if (order.getOrderItems() != null) {
+                order.getOrderItems().forEach(item -> {
+                    Product p = item.getProduct();
+                    if (p != null) {
+                        p.setStockQuantity(0); // Trừ kho, làm máy biến mất khỏi cửa hàng
+                        productRepository.save(p);
+                    }
+                });
+            }
+        }
+
         orderRepository.save(order);
 
         return ResponseEntity.ok(new MessageResponse("Đã cập nhật trạng thái đơn hàng thành: " + newStatus));

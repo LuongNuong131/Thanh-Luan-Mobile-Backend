@@ -1,44 +1,44 @@
 package com.thanhluanmobile.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import java.math.BigDecimal;
+import lombok.Data;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "products")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long productId;
 
-    @Column(nullable = false)
     private String name;
-
     @Column(columnDefinition = "TEXT")
     private String description;
-
-    @Column(nullable = false)
-    private BigDecimal price;
-
-    private BigDecimal discountPrice;
-    private Integer stockQuantity = 0;
-    private String brand = "Apple";
+    private Double price;
+    private Double discountPrice;
+    private Integer stockQuantity;
+    private String brand;
     private String model;
     private String storage;
     private String color;
-    private String conditionType;
-    private Integer warrantyMonths = 12;
-    private Double rating = 0.0;
+    private String conditionType; // Tình trạng xước xát
+    private Integer warrantyMonths;
+    private String image; // Ảnh thumbnail chính
+
+    @ElementCollection
+    @CollectionTable(name = "product_gallery", joinColumns = @JoinColumn(name = "product_id"))
+    @Column(name = "image_url")
+    private List<String> gallery; // Danh sách ảnh phụ
+
+    // Thông số chi tiết thêm
+    private String batteryHealth; // VD: Pin 99%
+    private String accessories; // VD: Cáp sạc, ốp lưng
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt = new Date();
-
-    // Sẽ thêm @ManyToOne Category và @OneToMany Images ở phase sau cho đỡ rối vòng lặp JSON
 }

@@ -53,11 +53,13 @@ public class OrderController {
             orderItem.setProduct(product);
             orderItem.setQuantity(itemDto.getQuantity());
 
-            // Lấy giá khuyến mãi nếu có, không thì lấy giá gốc
-            BigDecimal finalPrice = product.getDiscountPrice() != null ? product.getDiscountPrice() : product.getPrice();
+            // FIX LỖI: Lấy giá trị Double an toàn và ép sang BigDecimal
+            Double currentPrice = product.getDiscountPrice() != null ? product.getDiscountPrice() : product.getPrice();
+            BigDecimal finalPrice = BigDecimal.valueOf(currentPrice != null ? currentPrice : 0.0);
+
             orderItem.setPrice(finalPrice);
 
-            total = total.add(finalPrice.multiply(new BigDecimal(itemDto.getQuantity())));
+            total = total.add(finalPrice.multiply(BigDecimal.valueOf(itemDto.getQuantity())));
             orderItems.add(orderItem);
         }
 
