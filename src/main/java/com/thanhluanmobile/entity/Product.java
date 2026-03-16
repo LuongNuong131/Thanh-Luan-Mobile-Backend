@@ -14,6 +14,11 @@ public class Product {
     private Long productId;
 
     private String name;
+
+    // THÊM MỚI: Phân loại Hãng và RAM
+    private String category; // VD: iPhone, Samsung, Oppo...
+    private String ram; // VD: 4GB, 8GB, 12GB...
+
     @Column(columnDefinition = "TEXT")
     private String description;
     private Double price;
@@ -23,18 +28,17 @@ public class Product {
     private String model;
     private String storage;
     private String color;
-    private String conditionType; // Tình trạng xước xát
+    private String conditionType;
     private Integer warrantyMonths;
-    private String image; // Ảnh thumbnail chính
+    private String image;
 
     @ElementCollection
     @CollectionTable(name = "product_gallery", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "image_url")
-    private List<String> gallery; // Danh sách ảnh phụ
+    private List<String> gallery;
 
-    // Thông số chi tiết thêm
-    private String batteryHealth; // VD: Pin 99%
-    private String accessories; // VD: Cáp sạc, ốp lưng
+    private String batteryHealth;
+    private String accessories;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt = new Date();

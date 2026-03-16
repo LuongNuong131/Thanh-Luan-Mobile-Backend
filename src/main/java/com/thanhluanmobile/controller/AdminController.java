@@ -56,6 +56,11 @@ public class AdminController {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
 
         product.setName(productDetails.getName());
+
+        // Hứng dữ liệu Loại máy và RAM từ Frontend
+        product.setCategory(productDetails.getCategory());
+        product.setRam(productDetails.getRam());
+
         product.setDescription(productDetails.getDescription());
         product.setPrice(productDetails.getPrice());
         product.setDiscountPrice(productDetails.getDiscountPrice());
@@ -66,7 +71,6 @@ public class AdminController {
         product.setColor(productDetails.getColor());
         product.setConditionType(productDetails.getConditionType());
 
-        // Cập nhật thêm các trường mới
         product.setImage(productDetails.getImage());
         product.setGallery(productDetails.getGallery());
         product.setBatteryHealth(productDetails.getBatteryHealth());
@@ -95,7 +99,7 @@ public class AdminController {
         long totalOrders = orderRepository.count();
         long totalProducts = productRepository.count();
 
-        // SỬA LỖI ÉP KIỂU: Tự động trích xuất giá trị số thực để cộng dồn mượt mà
+        // Tính doanh thu chuẩn xác, không bị lỗi ép kiểu Double/BigDecimal
         double totalRevenue = orderRepository.findAll().stream()
                 .filter(o -> "DELIVERED".equals(o.getStatus()))
                 .mapToDouble(o -> o.getTotalPrice() != null ? o.getTotalPrice().doubleValue() : 0.0)
@@ -122,13 +126,13 @@ public class AdminController {
         String newStatus = statusUpdate.get("status");
         order.setStatus(newStatus);
 
-        // LOGIC MỚI: Nếu trạng thái là ĐÃ GIAO HÀNG (DELIVERED), đánh dấu máy đã bán (Stock = 0)
+        // Tự động cho máy bốc hơi khỏi kho khi đã giao hàng
         if ("DELIVERED".equals(newStatus)) {
             if (order.getOrderItems() != null) {
                 order.getOrderItems().forEach(item -> {
                     Product p = item.getProduct();
                     if (p != null) {
-                        p.setStockQuantity(0); // Trừ kho, làm máy biến mất khỏi cửa hàng
+                        p.setStockQuantity(0);
                         productRepository.save(p);
                     }
                 });
